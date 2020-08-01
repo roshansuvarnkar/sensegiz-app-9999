@@ -39,7 +39,8 @@ export class DeviceScanPage implements OnInit {
 
   }
 
-
+//old handles 14-ff1 17-ff4
+//new handle 5-ff1 8-ff4
   ngOnInit() {
     this.setTimer = setTimeout(() => {
     },5000);
@@ -297,6 +298,7 @@ async connectDevice(){
                        var hexData = this.buf2hex(data).toUpperCase()
                        console.log("started notified",hexData)
                        this.connectTimmer = 0
+                       var settingNetwork = this.general.checkNetwork()
                        if(hexData == "0000000000000000"){
                          var value = this.str2abb(this.general.timeBle())
                          this.ble.writeWithoutResponse(resId.id,res.characteristics[5].service,res.characteristics[5].characteristic,value).then((resdata:any)=>{
@@ -304,7 +306,7 @@ async connectDevice(){
                          })
                        }
 
-                       else if(hexData == "0011111111000000"){
+                       else if(hexData == "0011111111000000" && settingNetwork !='none'){
                          var dataRssi = {
                            userId : this.loginData.userId
                          }
@@ -337,7 +339,7 @@ async connectDevice(){
                          })
                        }
 
-                       else if(hexData == '0022222222000000'){
+                       else if(hexData == '0022222222000000' && settingNetwork !='none'){
                          var dataOnOff = {
                            deviceId : findIdAdvertisement,
                            userId : this.loginData.userId
@@ -373,7 +375,7 @@ async connectDevice(){
                          })
                        }
 
-                       else if(hexData == "0033333333000000"){
+                       else if(hexData == "0033333333000000" && settingNetwork !='none'){
                          var dataTxPower = {
                            userId : this.loginData.userId
                          }
@@ -482,7 +484,7 @@ async connectDevice(){
                            console.log("err==",err)
                          })
                        }
-                       else if(hexData == "0044444444000000"){
+                       else if(hexData == "0044444444000000" && settingNetwork !='none'){
                          var dataBuffer = {
                            userId : this.loginData.userId
                          }
@@ -523,7 +525,7 @@ async connectDevice(){
                          })
                        }
 
-                       else if(hexData == "0077777777000000"){
+                       else if(hexData == "0077777777000000" && settingNetwork !='none'){
                          var dataScanningInterval = {
                            userId : this.loginData.userId
                          }
@@ -567,7 +569,7 @@ async connectDevice(){
                          })
                        }
 
-                       else if(hexData == "0088888888000000"){
+                       else if(hexData == "0088888888000000" && settingNetwork !='none'){
                          var dataBuzzerConf = {
                            userId : this.loginData.userId
                          }
@@ -602,7 +604,7 @@ async connectDevice(){
                        }
 
 
-                       else if(hexData == "0099999999000000"){
+                       else if(hexData == "0099999999000000" && settingNetwork !='none'){
                          var dataDurationThreshold = {
                            userId : this.loginData.userId
                          }
@@ -610,16 +612,16 @@ async connectDevice(){
                            console.log("reson====",reson)
                            if(reson.status){
                              if(reson.success[0].durationThreshold != null && reson.success[0].durationThreshold != undefined && reson.success[0].durationThreshold != 'undefined'){
-                               var durationThreshold = reson.success[0].durationThreshold == '1' ? '121' : (parseInt(reson.success[0].durationThreshold)/5).toString()
+                               var durationThreshold = reson.success[0].durationThreshold.toString() == '0' ? '0' : (parseInt(reson.success[0].durationThreshold)/5).toString()
 
-                               if(reson.success[0].durationThreshold.toString().length == 1){
-                                 durationThreshold = '00' + reson.success[0].durationThreshold
+                               if(durationThreshold.toString().length == 1){
+                                 durationThreshold = '00' + durationThreshold
                                }
-                               else if(reson.success[0].durationThreshold.toString().length == 2){
-                                 durationThreshold = '0' + reson.success[0].durationThreshold
+                               else if(durationThreshold.toString().length == 2){
+                                 durationThreshold = '0' + durationThreshold
                                }
-                               else if(reson.success[0].durationThreshold.toString().length == 3){
-                                 durationThreshold = reson.success[0].durationThreshold
+                               else if(durationThreshold.toString().length == 3){
+                                 durationThreshold = durationThreshold
                                }
 
                                var valueData = '0000051' + durationThreshold + '0000'
@@ -650,7 +652,7 @@ async connectDevice(){
 
 
 
-                       else if(hexData == "00AAAAAAAA000000"){
+                       else if(hexData == "00AAAAAAAA000000" && settingNetwork !='none'){
                          var databuzzerTime= {
                            userId : this.loginData.userId
                          }
@@ -696,7 +698,7 @@ async connectDevice(){
                        }
 
 
-                       else if(hexData == "00BBBBBBBB000000"){
+                       else if(hexData == "00BBBBBBBB000000" || (settingNetwork =='none' && hexData.indexOf('000000') !== -1)){
                          this.ble.stopNotification(resId.id,res.characteristics[8].service,res.characteristics[8].characteristic).then(stopNot=>{
                            this.disconnect(resId.id).then((disres:any)=>{
                              resolve(true)
@@ -735,7 +737,7 @@ async connectDevice(){
                            }).catch(err=>{
                              console.log("err==",err)
                              console.log("ao catch====",a0)
-                             this.general.dataBackUp.push(this.dataFull)
+                             this.general.dataBackUp('backUpdataSensegiz',this.dataFull)
                              this.write(resId.id,res,a0).then((resWritenot:any)=>{
                                console.log("second write for data===",resWritenot)
                              })
@@ -744,7 +746,7 @@ async connectDevice(){
                          else{
                            console.log("ao else====",a0)
                            console.log("else network absent");
-                           this.general.dataBackUp.push(this.dataFull)
+                           this.general.dataBackUp('backUpdataSensegiz',this.dataFull)
                            this.write(resId.id,res,a0).then((resWritenot:any)=>{
                              console.log("second write for data===",resWritenot)
                            })
@@ -937,6 +939,10 @@ str2abb(str){
 
 hex2dec(str){
   return parseInt(str, 16)
+}
+
+getlocal(){
+  console.log("data local===",this.general.getObject())
 }
 
 
